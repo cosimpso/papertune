@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#111111">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Paper Tune">
+<title>Paper Tune</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icons/icon-192.png">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f4;
+    --bg3: #eeede9;
+    --text: #111111;
+    --text2: #666662;
+    --text3: #999994;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --radius: 10px;
+    --radius-lg: 14px;
+    --green: #1D9E75;
+    --green-bg: #E1F5EE;
+    --green-text: #0F6E56;
+    --amber: #BA7517;
+    --amber-bg: #FAEEDA;
+    --amber-text: #854F0B;
+    --red: #E24B4A;
+    --red-bg: #FCEBEB;
+    --red-text: #A32D2D;
+    --blue: #185FA5;
+    --blue-bg: #E6F1FB;
+    --blue-text: #0C447C;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --bg2: #242422;
+      --bg3: #2e2e2b;
+      --text: #f0efe9;
+      --text2: #9e9d97;
+      --text3: #6b6a65;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+      --green-bg: #04342C;
+      --green-text: #9FE1CB;
+      --amber-bg: #412402;
+      --amber-text: #FAC775;
+      --red-bg: #501313;
+      --red-text: #F7C1C1;
+      --blue-bg: #042C53;
+      --blue-text: #B5D4F4;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+  body { overflow-x: hidden; }
+
+  .app { max-width: 480px; margin: 0 auto; padding: 0 1rem 2rem; min-height: 100vh; }
+
+  .header { position: sticky; top: 0; background: var(--bg); z-index: 10; padding: 1rem 0 0.75rem; border-bottom: 0.5px solid var(--border); margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; }
+  .header-left h1 { font-size: 20px; font-weight: 600; color: var(--text); }
+  .header-left p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .header-actions { display: flex; gap: 6px; }
+  .hbtn { font-size: 12px; padding: 6px 11px; border: 0.5px solid var(--border2); border-radius: 8px; background: transparent; color: var(--text2); cursor: pointer; font-family: inherit; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+
+  .bow-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; cursor: pointer; margin-bottom: 8px; }
+  .bow-card-name { font-size: 16px; font-weight: 600; color: var(--text); }
+  .bow-card-meta { font-size: 12px; color: var(--text2); margin-top: 3px; }
+  .bow-card-suggest { font-size: 12px; color: var(--green-text); margin-top: 5px; }
+  .bow-card-actions { display: flex; gap: 6px; margin: 4px 0 12px; }
+
+  .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text3); font-size: 14px; line-height: 1.6; }
+
+  .form-group { margin-bottom: 1rem; }
+  .form-label { font-size: 13px; color: var(--text2); margin-bottom: 5px; display: block; }
+  .form-input { width: 100%; padding: 11px 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); font-size: 16px; font-family: inherit; }
+  .form-input:focus { outline: none; border-color: var(--text3); }
+  textarea.form-input { min-height: 70px; resize: vertical; font-size: 15px; }
+  .form-row { display: flex; gap: 8px; }
+  .form-row .form-group { flex: 1; }
+
+  .btn-primary { width: 100%; padding: 15px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius); font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; margin-bottom: .75rem; }
+  .btn-primary:disabled { opacity: .35; cursor: not-allowed; }
+  .btn-secondary { width: 100%; padding: 12px; background: transparent; color: var(--text); border: 0.5px solid var(--border2); border-radius: var(--radius); font-size: 15px; cursor: pointer; font-family: inherit; margin-bottom: .5rem; }
+  .btn-danger { width: 100%; padding: 11px; background: transparent; color: var(--red-text); border: 0.5px solid var(--red); border-radius: var(--radius); font-size: 14px; cursor: pointer; font-family: inherit; }
+
+  .count-row { display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; }
+  .count-label { font-size: 13px; color: var(--text2); }
+  .count-btn { padding: 7px 16px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: transparent; color: var(--text); font-family: inherit; font-size: 14px; cursor: pointer; }
+  .count-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .arrow-slots { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .arrow-slot { flex: 1; border: 0.5px dashed var(--border2); border-radius: var(--radius); aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: var(--bg2); overflow: hidden; position: relative; }
+  .arrow-slot.filled { border-style: solid; }
+  .arrow-slot img { width: 100%; height: 100%; object-fit: cover; }
+  .slot-num { font-size: 20px; color: var(--text3); opacity: .5; }
+  .slot-lbl { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .slot-rm { position: absolute; top: 5px; right: 5px; width: 20px; height: 20px; border-radius: 50%; background: var(--red-bg); color: var(--red-text); border: none; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+  .suggest-banner { background: var(--blue-bg); border: 0.5px solid rgba(24,95,165,.3); border-radius: var(--radius); padding: 11px 14px; margin-bottom: 1rem; }
+  .suggest-title { font-size: 13px; font-weight: 600; color: var(--blue-text); }
+  .suggest-body { font-size: 12px; color: var(--blue-text); margin-top: 3px; opacity: .85; line-height: 1.5; }
+
+  .pos-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .pos-chip { flex: 1; background: var(--bg2); border-radius: var(--radius); padding: 10px; text-align: center; }
+  .pos-chip-lbl { font-size: 11px; color: var(--text3); }
+  .pos-chip-val { font-size: 15px; font-weight: 600; color: var(--text); margin-top: 2px; }
+
+  .result-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .instruction { font-size: 24px; font-weight: 600; color: var(--text); margin-bottom: 6px; line-height: 1.25; }
+  .instruction-sub { font-size: 14px; color: var(--text2); line-height: 1.5; }
+
+  .cbar { margin: 12px 0; }
+  .cbar-lbl { font-size: 11px; color: var(--text3); margin-bottom: 5px; }
+  .bar-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 2px; }
+  .bc { background: var(--green); } .bm { background: var(--amber); } .bi { background: var(--red); }
+  .chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+  .chip { font-size: 11px; padding: 3px 9px; border-radius: 20px; }
+  .cc { background: var(--green-bg); color: var(--green-text); }
+  .cm { background: var(--amber-bg); color: var(--amber-text); }
+  .ci { background: var(--red-bg); color: var(--red-text); }
+
+  .done-card { background: var(--green-bg); border: 0.5px solid rgba(29,158,117,.3); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .done-title { font-size: 18px; font-weight: 600; color: var(--green-text); margin-bottom: 6px; }
+  .done-sub { font-size: 14px; color: var(--green-text); opacity: .85; line-height: 1.5; }
+
+  .form-warn { background: var(--red-bg); border: 0.5px solid rgba(226,75,74,.3); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .form-warn-title { font-size: 16px; font-weight: 600; color: var(--red-text); margin-bottom: 5px; }
+  .form-warn-sub { font-size: 13px; color: var(--red-text); opacity: .85; line-height: 1.5; }
+
+  .warn-card { background: var(--amber-bg); border: 0.5px solid rgba(186,117,23,.3); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  .warn-text { font-size: 13px; color: var(--amber-text); line-height: 1.5; }
+
+  .divider { height: 0.5px; background: var(--border); margin: 1rem 0; }
+
+  .log-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 9px 0; border-bottom: 0.5px solid var(--border); gap: 8px; }
+  .log-item:last-child { border-bottom: none; }
+  .log-left { font-size: 12px; color: var(--text3); }
+  .log-right { font-size: 13px; color: var(--text); text-align: right; }
+
+  .tune-item { padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .tune-item:last-child { border-bottom: none; }
+  .tune-date { font-size: 12px; color: var(--text3); }
+  .tune-result { font-size: 13px; color: var(--text); margin-top: 2px; }
+  .tune-detail { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  .pattern-card { background: var(--bg2); border-radius: var(--radius); padding: 11px 14px; margin-bottom: 1rem; }
+  .pattern-lbl { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+  .pattern-val { font-size: 14px; color: var(--text); }
+
+  .env-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .env-group { flex: 1; }
+  .env-lbl { font-size: 11px; color: var(--text3); margin-bottom: 4px; display: block; }
+  .env-input { width: 100%; padding: 9px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); font-size: 14px; font-family: inherit; }
+
+  .bs-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: .5rem; }
+  .bs-btn { padding: 9px 14px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: transparent; color: var(--text); font-family: inherit; font-size: 14px; cursor: pointer; }
+  .bs-btn.selected { background: var(--text); color: var(--bg); }
+
+  .tab-row { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 1.25rem; }
+  .tab { flex: 1; padding: 10px; text-align: center; font-size: 14px; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 600; }
+
+  .export-card { background: var(--bg2); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; font-size: 13px; color: var(--text); line-height: 1.9; white-space: pre-wrap; font-family: 'Courier New', monospace; }
+
+  .loading { text-align: center; padding: 3rem 1rem; }
+  .loading-dots { display: inline-flex; gap: 7px; }
+  .loading-dots span { width: 9px; height: 9px; border-radius: 50%; background: var(--text3); animation: pulse 1.2s ease-in-out infinite; }
+  .loading-dots span:nth-child(2) { animation-delay: .2s; }
+  .loading-dots span:nth-child(3) { animation-delay: .4s; }
+  @keyframes pulse { 0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)} }
+  .loading-text { font-size: 14px; color: var(--text2); margin-top: 14px; }
+
+  input[type=file] { display: none; }
+
+  .install-banner { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+  .install-text { font-size: 13px; color: var(--text2); }
+  .install-btn { font-size: 13px; font-weight: 600; color: var(--blue-text); background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <h1 id="header-title">Paper Tune</h1>
+      <p id="header-sub">Select a bow to begin</p>
+    </div>
+    <div class="header-actions">
+      <button class="hbtn" id="hbtn-bows" onclick="showScreen('bows')" style="display:none">Bows</button>
+      <button class="hbtn" id="hbtn-export" onclick="showExport()" style="display:none">Export</button>
+    </div>
+  </div>
+
+  <!-- BOWS -->
+  <div id="screen-bows" class="screen active">
+    <div id="install-banner" style="display:none" class="install-banner">
+      <span class="install-text">Add to home screen for best experience</span>
+      <button class="install-btn" id="install-btn">Install</button>
+    </div>
+    <div id="bow-list"></div>
+    <button class="btn-primary" onclick="showScreen('new-bow')">Add bow setup</button>
+  </div>
+
+  <!-- NEW BOW -->
+  <div id="screen-new-bow" class="screen">
+    <div class="section-title">New setup</div>
+    <div class="form-group"><label class="form-label">Setup name</label><input class="form-input" id="nb-name" placeholder="e.g. Concept X — Indoors" type="text"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Arrow</label><input class="form-input" id="nb-arrow" placeholder="e.g. SD27" type="text"></div>
+      <div class="form-group"><label class="form-label">Rest</label><input class="form-input" id="nb-rest" placeholder="e.g. Freakshow" type="text"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="nb-notes" placeholder="Draw weight, string, etc."></textarea></div>
+    <button class="btn-primary" onclick="createBow()">Save setup</button>
+    <button class="btn-secondary" onclick="showScreen('bows')">Cancel</button>
+  </div>
+
+  <!-- BOW DETAIL -->
+  <div id="screen-bow-detail" class="screen">
+    <div class="tab-row">
+      <div class="tab active" onclick="switchTab('history',this)">History</div>
+      <div class="tab" onclick="switchTab('bare',this)">Bare shaft</div>
+    </div>
+    <div id="detail-history"></div>
+    <div id="detail-bare" style="display:none"></div>
+    <div class="divider"></div>
+    <button class="btn-danger" id="delete-bow-btn">Delete setup</button>
+  </div>
+
+  <!-- TUNE -->
+  <div id="screen-tune" class="screen">
+    <div id="suggest-banner" style="display:none" class="suggest-banner"></div>
+    <div class="section-title">Environment</div>
+    <div class="env-row">
+      <div class="env-group"><label class="env-lbl">Temp °C</label><input class="env-input" id="env-temp" type="number" placeholder="18"></div>
+      <div class="env-group"><label class="env-lbl">Draw lbs</label><input class="env-input" id="env-draw" type="number" placeholder="60"></div>
+      <div class="env-group"><label class="env-lbl">Reason</label><input class="env-input" id="env-reason" type="text" placeholder="New string"></div>
+    </div>
+    <div class="section-title">End</div>
+    <div class="count-row">
+      <span class="count-label">Arrows:</span>
+      <button class="count-btn" data-n="1">1</button>
+      <button class="count-btn" data-n="2">2</button>
+      <button class="count-btn active" data-n="3">3</button>
+    </div>
+    <div class="arrow-slots" id="arrow-slots"></div>
+    <input type="file" id="file-input" accept="image/*" capture="environment">
+    <div id="pos-row" class="pos-row" style="display:none">
+      <div class="pos-chip"><div class="pos-chip-lbl">Vertical</div><div class="pos-chip-val" id="pv">0.0mm</div></div>
+      <div class="pos-chip"><div class="pos-chip-lbl">Horizontal</div><div class="pos-chip-val" id="ph">0.0mm</div></div>
+      <div class="pos-chip"><div class="pos-chip-lbl">End</div><div class="pos-chip-val" id="pe">0</div></div>
+    </div>
+    <button class="btn-primary" id="analyse-btn" disabled>Analyse end</button>
+    <div id="result-view" style="display:none"></div>
+    <div id="log-view" style="display:none">
+      <div class="divider"></div>
+      <div class="section-title">Session log</div>
+      <div id="log-items"></div>
+    </div>
+    <button class="btn-secondary" id="finish-btn" style="display:none" onclick="finishSession()">Finish &amp; save tune</button>
+    <button class="btn-secondary" onclick="showScreen('bows')">Back to bows</button>
+  </div>
+
+  <!-- BARE SHAFT -->
+  <div id="screen-bare-shaft" class="screen">
+    <div class="section-title">Bare shaft at 20m</div>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:1rem;line-height:1.5">Where did bare shaft hit relative to fletched arrows?</p>
+    <div class="bs-row" id="bs-btns">
+      <button class="bs-btn" data-v="Clean">Clean</button>
+      <button class="bs-btn" data-v="High">High</button>
+      <button class="bs-btn" data-v="Low">Low</button>
+      <button class="bs-btn" data-v="Left">Left</button>
+      <button class="bs-btn" data-v="Right">Right</button>
+      <button class="bs-btn" data-v="High-left">High-left</button>
+      <button class="bs-btn" data-v="High-right">High-right</button>
+      <button class="bs-btn" data-v="Low-left">Low-left</button>
+      <button class="bs-btn" data-v="Low-right">Low-right</button>
+    </div>
+    <div class="form-group" style="margin-top:1rem"><label class="form-label">Notes</label><textarea class="form-input" id="bs-notes" placeholder="Conditions, arrow, distance..."></textarea></div>
+    <div id="bs-correlation" style="display:none" class="suggest-banner"></div>
+    <button class="btn-primary" id="bs-save-btn" disabled onclick="saveBareShaft()">Save result</button>
+    <button class="btn-secondary" onclick="showScreen('bows')">Cancel</button>
+  </div>
+
+  <!-- EXPORT -->
+  <div id="screen-export" class="screen">
+    <div class="section-title">Session report</div>
+    <div class="export-card" id="export-content"></div>
+    <button class="btn-primary" onclick="copyExport()">Copy to clipboard</button>
+    <button class="btn-secondary" onclick="showScreen('bows')">Done</button>
+  </div>
+
+  <!-- LOADING -->
+  <div id="screen-loading" class="screen">
+    <div class="loading">
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+      <p class="loading-text" id="loading-text">Reading tears...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Storage ──────────────────────────────────────────────────────────────────
+const DB = 'papertune_v4';
+function loadBows(){try{return JSON.parse(localStorage.getItem(DB))||[]}catch(e){return[]}}
+function saveBows(b){try{localStorage.setItem(DB,JSON.stringify(b))}catch(e){alert('Storage failed — device storage may be full.')}}
+
+// ── PWA install prompt ────────────────────────────────────────────────────────
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'flex';
+});
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('install-banner').style.display = 'none';
+});
+
+// ── Service Worker ────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const S = {
+  bowId:null, arrowCount:3, slots:[], activeSlot:null,
+  endCount:0, vMm:0, hMm:0, history:[], startedAt:null,
+  env:{temp:'',draw:'',reason:''}, detailBowId:null,
+  bsSelectedVal:null, bsTuneIndex:null
+};
+
+// ── Screens ───────────────────────────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('hbtn-bows').style.display = name==='bows' ? 'none' : 'block';
+  document.getElementById('hbtn-export').style.display = (name==='tune' && S.endCount>0) ? 'block' : 'none';
+  if (name==='bows') renderBows();
+  window.scrollTo(0,0);
+}
+
+// ── Bow list ──────────────────────────────────────────────────────────────────
+function renderBows() {
+  document.getElementById('header-title').textContent = 'Paper Tune';
+  document.getElementById('header-sub').textContent = 'Select a bow to begin';
+  const bows = loadBows();
+  const c = document.getElementById('bow-list');
+  if (!bows.length) { c.innerHTML='<div class="empty-state">No setups yet.<br>Add your first bow below.</div>'; return; }
+  c.innerHTML = bows.map(b => {
+    const last = b.tunes&&b.tunes.length ? b.tunes[b.tunes.length-1] : null;
+    const sug = getSuggestion(b);
+    return `<div class="bow-card" onclick="selectBow('${b.id}')">
+      <div class="bow-card-name">${esc(b.name)}</div>
+      <div class="bow-card-meta">${[b.arrow,b.rest].filter(Boolean).map(esc).join(' · ')}${last?' · '+fmtDate(last.date):' · Never tuned'}</div>
+      ${sug?`<div class="bow-card-suggest">${sug}</div>`:''}
+    </div>
+    <div class="bow-card-actions">
+      <button class="hbtn" onclick="event.stopPropagation();showDetail('${b.id}')">History</button>
+      <button class="hbtn" onclick="event.stopPropagation();startBareShaft('${b.id}')">Log bare shaft</button>
+    </div>`;
+  }).join('');
+}
+
+function getSuggestion(bow) {
+  if (!bow.tunes||bow.tunes.length<2) return null;
+  const last = bow.tunes.slice(-3);
+  const avgV = (last.reduce((s,t)=>s+t.finalV,0)/last.length).toFixed(1);
+  const avgH = (last.reduce((s,t)=>s+t.finalH,0)/last.length).toFixed(1);
+  return `Typically ends V${avgV>=0?'+':''}${avgV}mm H${avgH>=0?'+':''}${avgH}mm`;
+}
+
+// ── Select bow & start session ────────────────────────────────────────────────
+function selectBow(id) {
+  const bows = loadBows();
+  const bow = bows.find(b=>b.id===id);
+  if (!bow) return;
+  S.bowId=id; S.endCount=0; S.vMm=0; S.hMm=0; S.history=[];
+  S.startedAt=new Date().toISOString();
+
+  const banner = document.getElementById('suggest-banner');
+  if (bow.tunes&&bow.tunes.length>=2) {
+    const last = bow.tunes.slice(-3);
+    const avgV = parseFloat((last.reduce((s,t)=>s+t.finalV,0)/last.length).toFixed(1));
+    const avgH = parseFloat((last.reduce((s,t)=>s+t.finalH,0)/last.length).toFixed(1));
+    S.vMm=avgV; S.hMm=avgH;
+    banner.innerHTML=`<div class="suggest-title">Starting point suggestion</div><div class="suggest-body">Based on ${last.length} previous tunes — starting at V${avgV>=0?'+':''}${avgV}mm H${avgH>=0?'+':''}${avgH}mm rather than berger zero.</div>`;
+    banner.style.display='block';
+  } else { banner.style.display='none'; }
+
+  document.getElementById('header-title').textContent = esc(bow.name);
+  document.getElementById('header-sub').textContent = [bow.arrow,bow.rest].filter(Boolean).map(esc).join(' · ');
+  document.getElementById('result-view').style.display='none';
+  document.getElementById('log-view').style.display='none';
+  document.getElementById('finish-btn').style.display='none';
+  buildSlots(); updatePos();
+  showScreen('tune');
+}
+
+// ── Arrow slots ───────────────────────────────────────────────────────────────
+function buildSlots() {
+  S.slots = Array(S.arrowCount).fill(null);
+  const c = document.getElementById('arrow-slots');
+  c.innerHTML='';
+  for (let i=0;i<S.arrowCount;i++) {
+    const d = document.createElement('div');
+    d.className='arrow-slot';
+    d.innerHTML=`<div class="slot-num">${i+1}</div><div class="slot-lbl">Arrow ${i+1}</div>`;
+    d.addEventListener('click',()=>{S.activeSlot=i;document.getElementById('file-input').click();});
+    c.appendChild(d);
+  }
+  checkReady();
+}
+
+document.querySelectorAll('.count-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.count-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    S.arrowCount=parseInt(b.dataset.n);
+    buildSlots();
+  });
+});
+
+document.getElementById('file-input').addEventListener('change',function(e){
+  const f=e.target.files[0];
+  if(!f||S.activeSlot===null) return;
+  const i=S.activeSlot;
+  const r=new FileReader();
+  r.onload=ev=>{
+    S.slots[i]={data:ev.target.result,file:f};
+    const slot=document.getElementById('arrow-slots').children[i];
+    slot.classList.add('filled');
+    slot.innerHTML=`<img src="${ev.target.result}" alt="tear"><button class="slot-rm" onclick="rmSlot(${i},event)">×</button>`;
+    checkReady();
+  };
+  r.readAsDataURL(f);
+  this.value='';
+});
+
+function rmSlot(i,e){
+  e.stopPropagation();
+  S.slots[i]=null;
+  const slot=document.getElementById('arrow-slots').children[i];
+  slot.classList.remove('filled');
+  slot.innerHTML=`<div class="slot-num">${i+1}</div><div class="slot-lbl">Arrow ${i+1}</div>`;
+  checkReady();
+}
+
+function checkReady(){
+  const n=S.slots.filter(s=>s!==null).length;
+  const btn=document.getElementById('analyse-btn');
+  btn.disabled=n===0;
+  btn.textContent=n>0?`Analyse ${n} arrow${n>1?'s':''}`:'Analyse end';
+}
+
+// ── Oscillation detection ─────────────────────────────────────────────────────
+function detectOscillation(){
+  for(const key of['vDelta','hDelta']){
+    const vals=S.history.slice(-4).map(h=>h[key]).filter(v=>v!==0);
+    if(vals.length>=2) for(let i=1;i<vals.length;i++) if(Math.sign(vals[i])!==Math.sign(vals[i-1])) return true;
+  }
+  return false;
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────────
+async function apiCall(messages,maxTokens=500){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,messages})
+  });
+  if(!res.ok) throw new Error('API error '+res.status);
+  const d=await res.json();
+  const text=d.content.map(b=>b.text||'').join('');
+  return JSON.parse(text.replace(/```json|```/g,'').trim());
+}
+
+async function analyseArrow(slot,num,total,ctx){
+  const prompt=`Compound archery paper tuning expert. Arrow ${num} of ${total}.\n${ctx}\nClassify this tear. Respond ONLY in JSON:\n{"tearClassification":"nock_high","tearDescription":"small tail below shaft hole","confidence":"high","vaneContactSuspected":false,"unreadable":false}`;
+  return apiCall([{role:'user',content:[
+    {type:'image',source:{type:'base64',media_type:slot.file.type||'image/jpeg',data:slot.data.split(',')[1]}},
+    {type:'text',text:prompt}
+  ]}],300);
+}
+
+async function synthesise(tears,ctx,oscillating){
+  const summary=tears.map((t,i)=>`Arrow ${i+1}: ${t.tearClassification} — ${t.tearDescription}`).join('\n');
+  const oNote=oscillating?'Oscillation detected in session — cap any increment at 0.5mm.':'';
+  const prompt=`Compound archery paper tuning. ${tears.length} arrows from one end.\n${summary}\n${ctx}\n${oNote}\nCurrent rest from starting point: V${S.vMm.toFixed(1)}mm H${S.hMm.toFixed(1)}mm.\nConsistency: consistent=adjust, marginal=adjust at 0.5mm, inconsistent=refuse (form problem).\nMove REST only. Nock high=rest down. Nock low=rest up. Nock left=rest left. Nock right=rest right.\nIncrement 0.5-1mm. Declare done if bullet hole / within 1.5x shaft diameter.\nRespond ONLY in JSON:\n{"consistency":"consistent","consistencyReason":"all three arrows show identical nock high tear","adjustmentGiven":true,"instruction":"Rest down 0.5mm","deltaMm":-0.5,"horizontalDeltaMm":0,"oscillationWarning":false,"vaneContactSuspected":false,"done":false,"doneMessage":"","formMessage":""}`;
+  return apiCall([{role:'user',content:[{type:'text',text:prompt}]}]);
+}
+
+// ── Analyse ───────────────────────────────────────────────────────────────────
+document.getElementById('analyse-btn').addEventListener('click', async () => {
+  const filled=S.slots.filter(s=>s!==null);
+  if(!filled.length) return;
+  S.env.temp=document.getElementById('env-temp').value;
+  S.env.draw=document.getElementById('env-draw').value;
+  S.env.reason=document.getElementById('env-reason').value;
+
+  document.getElementById('analyse-btn').disabled=true;
+  document.getElementById('screen-tune').style.display='none';
+  document.getElementById('screen-loading').classList.add('active');
+  document.getElementById('result-view').style.display='none';
+  window.scrollTo(0,0);
+
+  const osc=detectOscillation();
+  const ctx=S.history.length?'Session so far: '+S.history.map(h=>`End ${h.end}: ${h.consistency} — ${h.instruction}`).join('; '):'First end of session.';
+  const lt=document.getElementById('loading-text');
+
+  try{
+    const tears=[];
+    for(let i=0;i<S.slots.length;i++){
+      if(!S.slots[i]) continue;
+      lt.textContent=`Reading arrow ${tears.length+1} of ${filled.length}...`;
+      tears.push(await analyseArrow(S.slots[i],tears.length+1,filled.length,ctx));
+    }
+    lt.textContent=filled.length>1?'Checking consistency...':'Getting instruction...';
+    const synth=await synthesise(tears,ctx,osc);
+
+    S.endCount++;
+    if(synth.adjustmentGiven){
+      S.vMm=parseFloat((S.vMm+(synth.deltaMm||0)).toFixed(1));
+      S.hMm=parseFloat((S.hMm+(synth.horizontalDeltaMm||0)).toFixed(1));
+    }
+    S.history.push({
+      end:S.endCount, consistency:synth.consistency,
+      instruction:synth.done?'Done':(synth.adjustmentGiven?synth.instruction:'No adjust — form'),
+      vDelta:synth.deltaMm||0, hDelta:synth.horizontalDeltaMm||0,
+      arrowCount:filled.length, tears, env:{...S.env},
+      vAfter:S.vMm, hAfter:S.hMm
+    });
+
+    document.getElementById('screen-loading').classList.remove('active');
+    document.getElementById('screen-tune').style.display='block';
+    renderResult(synth,tears);
+    updatePos();
+    updateLog();
+    if(synth.done||S.endCount>=2){
+      document.getElementById('finish-btn').style.display='block';
+      document.getElementById('hbtn-export').style.display='block';
+    }
+    buildSlots();
+  }catch(err){
+    document.getElementById('screen-loading').classList.remove('active');
+    document.getElementById('screen-tune').style.display='block';
+    document.getElementById('result-view').innerHTML='<div class="warn-card"><p class="warn-text">Analysis failed. Check your connection and try again.</p></div>';
+    document.getElementById('result-view').style.display='block';
+    checkReady();
+  }
+  window.scrollTo(0,0);
+});
+
+// ── Render result ─────────────────────────────────────────────────────────────
+function renderResult(synth,tears){
+  let h='';
+  if(synth.done){
+    h=`<div class="done-card"><div class="done-title">Bullet hole — tuning complete</div><div class="done-sub">${synth.doneMessage||'Move to bare shaft at 20m / 18yd to confirm.'}<br><br>Tap "Finish &amp; save" to record this session.</div></div>`;
+  } else if(synth.consistency==='inconsistent'){
+    h=`<div class="form-warn"><div class="form-warn-title">Inconsistent — fix your shot</div><div class="form-warn-sub">${synth.formMessage||'Arrows showing different tear patterns. This is a form problem, not a setup problem. No rest adjustment given.'}</div></div>`;
+  } else if(synth.vaneContactSuspected){
+    h=`<div class="warn-card"><p class="warn-text">Vane contact suspected. Powder the rest blade and reshoot before continuing.</p></div>`;
+  } else {
+    h=`<div class="result-card"><div class="instruction">${synth.instruction}</div><div class="instruction-sub">${synth.consistencyReason}</div>`;
+    if(tears.length>1){
+      const pct=synth.consistency==='consistent'?100:synth.consistency==='marginal'?55:20;
+      const bc=synth.consistency==='consistent'?'bc':synth.consistency==='marginal'?'bm':'bi';
+      h+=`<div class="cbar"><div class="cbar-lbl">Shot consistency</div><div class="bar-track"><div class="bar-fill ${bc}" style="width:${pct}%"></div></div>`;
+      h+=`<div class="chips">${tears.map((t,i)=>`<span class="chip ${t.confidence==='high'?'cc':'cm'}">A${i+1}: ${t.tearClassification.replace(/_/g,' ')}</span>`).join('')}</div></div>`;
+    }
+    if(synth.oscillationWarning) h+=`<div style="margin-top:10px;padding:10px;background:var(--amber-bg);border-radius:8px"><p style="font-size:12px;color:var(--amber-text)">Oscillation detected — increment capped at 0.5mm. Check vane contact and form consistency.</p></div>`;
+    h+='</div>';
+  }
+  document.getElementById('result-view').innerHTML=h;
+  document.getElementById('result-view').style.display='block';
+}
+
+function updatePos(){
+  if(S.endCount===0&&S.vMm===0&&S.hMm===0){document.getElementById('pos-row').style.display='none';return;}
+  document.getElementById('pv').textContent=(S.vMm>=0?'+':'')+S.vMm.toFixed(1)+'mm';
+  document.getElementById('ph').textContent=(S.hMm>=0?'+':'')+S.hMm.toFixed(1)+'mm';
+  document.getElementById('pe').textContent=S.endCount;
+  document.getElementById('pos-row').style.display='flex';
+}
+
+function updateLog(){
+  if(!S.history.length) return;
+  document.getElementById('log-view').style.display='block';
+  document.getElementById('log-items').innerHTML=S.history.map(h=>{
+    const cc=h.consistency==='consistent'?'cc':h.consistency==='marginal'?'cm':'ci';
+    return `<div class="log-item"><div class="log-left">End ${h.end}${h.env&&h.env.reason?`<br><span style="font-size:11px;opacity:.7">${esc(h.env.reason)}</span>`:''}<br><span class="chip ${cc}" style="margin-top:3px;display:inline-block">${h.consistency}</span></div><div class="log-right">${h.instruction}</div></div>`;
+  }).join('');
+}
+
+// ── Finish session ────────────────────────────────────────────────────────────
+function finishSession(){
+  const bows=loadBows();
+  const bow=bows.find(b=>b.id===S.bowId);
+  if(!bow) return;
+  if(!bow.tunes) bow.tunes=[];
+  bow.tunes.push({date:new Date().toISOString(),finalV:S.vMm,finalH:S.hMm,ends:S.endCount,history:S.history,env:{...S.env}});
+  saveBows(bows);
+  S.bsTuneIndex=bow.tunes.length-1;
+  const btn=document.getElementById('finish-btn');
+  btn.textContent='Saved ✓';btn.disabled=true;
+  setTimeout(()=>{
+    if(confirm('Log bare shaft result at 20m now?')) startBareShaft(S.bowId,bow.tunes.length-1);
+    else showScreen('bows');
+  },500);
+}
+
+// ── Bare shaft ────────────────────────────────────────────────────────────────
+function startBareShaft(bowId,tuneIndex){
+  S.detailBowId=bowId; S.bsTuneIndex=tuneIndex!==undefined?tuneIndex:null; S.bsSelectedVal=null;
+  document.querySelectorAll('.bs-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('bs-notes').value='';
+  document.getElementById('bs-save-btn').disabled=true;
+  document.getElementById('bs-correlation').style.display='none';
+  const bows=loadBows();
+  const bow=bows.find(b=>b.id===bowId);
+  if(bow&&bow.bareShafts&&bow.bareShafts.length>=2){
+    const prev=bow.bareShafts.slice(-3);
+    const counts={};
+    prev.forEach(bs=>counts[bs.result]=(counts[bs.result]||0)+1);
+    const common=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+    if(common&&common[1]>=2){
+      const corr=document.getElementById('bs-correlation');
+      corr.innerHTML=`<div class="suggest-title">Pattern detected</div><div class="suggest-body">Bare shaft has been "${common[0]}" on ${common[1]} of last ${prev.length} tunes. If consistent, consider adjusting your paper tune endpoint to pre-compensate.</div>`;
+      corr.style.display='block';
+    }
+  }
+  document.getElementById('header-title').textContent='Bare shaft';
+  document.getElementById('header-sub').textContent='20m result';
+  showScreen('bare-shaft');
+}
+
+document.querySelectorAll('.bs-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.bs-btn').forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+    S.bsSelectedVal=b.dataset.v;
+    document.getElementById('bs-save-btn').disabled=false;
+  });
+});
+
+function saveBareShaft(){
+  const bows=loadBows();
+  const bow=bows.find(b=>b.id===S.detailBowId);
+  if(!bow||!S.bsSelectedVal) return;
+  if(!bow.bareShafts) bow.bareShafts=[];
+  bow.bareShafts.push({date:new Date().toISOString(),result:S.bsSelectedVal,notes:document.getElementById('bs-notes').value,tuneIndex:S.bsTuneIndex,finalV:bow.tunes&&S.bsTuneIndex!==null?bow.tunes[S.bsTuneIndex]?.finalV:null,finalH:bow.tunes&&S.bsTuneIndex!==null?bow.tunes[S.bsTuneIndex]?.finalH:null});
+  saveBows(bows);
+  showScreen('bows');
+}
+
+// ── Detail ────────────────────────────────────────────────────────────────────
+function showDetail(id){
+  const bows=loadBows();
+  const bow=bows.find(b=>b.id===id);
+  if(!bow) return;
+  S.detailBowId=id;
+  document.getElementById('header-title').textContent=esc(bow.name);
+  document.getElementById('header-sub').textContent='Setup detail';
+  document.getElementById('delete-bow-btn').onclick=()=>{
+    if(confirm(`Delete "${bow.name}"?`)){const bows=loadBows();saveBows(bows.filter(b=>b.id!==id));showScreen('bows');}
+  };
+  renderDetailHistory(bow);
+  renderDetailBare(bow);
+  showScreen('bow-detail');
+}
+
+function switchTab(tab,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('detail-history').style.display=tab==='history'?'block':'none';
+  document.getElementById('detail-bare').style.display=tab==='bare'?'block':'none';
+}
+
+function renderDetailHistory(bow){
+  let h='';
+  if(bow.tunes&&bow.tunes.length>=2){
+    const last=bow.tunes.slice(-5);
+    const avgV=(last.reduce((s,t)=>s+t.finalV,0)/last.length).toFixed(1);
+    const avgH=(last.reduce((s,t)=>s+t.finalH,0)/last.length).toFixed(1);
+    const avgE=Math.round(last.reduce((s,t)=>s+t.ends,0)/last.length);
+    h+=`<div class="pattern-card"><div class="pattern-lbl">Average final position (last ${last.length} tunes)</div><div class="pattern-val">V${avgV>=0?'+':''}${avgV}mm · H${avgH>=0?'+':''}${avgH}mm · ~${avgE} ends to tune</div></div>`;
+  }
+  if(!bow.tunes||!bow.tunes.length){h+='<div class="empty-state">No completed tunes yet.</div>';}
+  else h+=bow.tunes.slice().reverse().map(t=>`<div class="tune-item"><div class="tune-date">${fmtDate(t.date)}${t.env&&t.env.reason?' · '+esc(t.env.reason):''}</div><div class="tune-result">V${t.finalV>=0?'+':''}${t.finalV.toFixed(1)}mm · H${t.finalH>=0?'+':''}${t.finalH.toFixed(1)}mm</div><div class="tune-detail">${t.ends} end${t.ends!==1?'s':''}${t.env&&t.env.temp?' · '+t.env.temp+'°C':''}${t.env&&t.env.draw?' · '+t.env.draw+'lbs':''}</div></div>`).join('');
+  document.getElementById('detail-history').innerHTML=h;
+}
+
+function renderDetailBare(bow){
+  if(!bow.bareShafts||!bow.bareShafts.length){document.getElementById('detail-bare').innerHTML='<div class="empty-state">No bare shaft results logged yet.</div>';return;}
+  const counts={};
+  bow.bareShafts.forEach(bs=>counts[bs.result]=(counts[bs.result]||0)+1);
+  let h=`<div class="pattern-card"><div class="pattern-lbl">Bare shaft pattern (${bow.bareShafts.length} results)</div><div class="pattern-val">${Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}: ${v}×`).join(' · ')}</div></div>`;
+  h+=bow.bareShafts.slice().reverse().map(bs=>`<div class="tune-item"><div class="tune-date">${fmtDate(bs.date)}</div><div class="tune-result">${bs.result}</div><div class="tune-detail">${bs.notes?esc(bs.notes):''}${bs.finalV!==null?' · Paper ended V'+(bs.finalV>=0?'+':'')+bs.finalV.toFixed(1)+'mm H'+(bs.finalH>=0?'+':'')+bs.finalH.toFixed(1)+'mm':''}</div></div>`).join('');
+  document.getElementById('detail-bare').innerHTML=h;
+}
+
+// ── Create bow ────────────────────────────────────────────────────────────────
+function createBow(){
+  const name=document.getElementById('nb-name').value.trim();
+  if(!name){document.getElementById('nb-name').focus();return;}
+  const bows=loadBows();
+  bows.push({id:Date.now().toString(),name,arrow:document.getElementById('nb-arrow').value.trim(),rest:document.getElementById('nb-rest').value.trim(),notes:document.getElementById('nb-notes').value.trim(),tunes:[],bareShafts:[]});
+  saveBows(bows);
+  ['nb-name','nb-arrow','nb-rest','nb-notes'].forEach(id=>document.getElementById(id).value='');
+  showScreen('bows');
+}
+
+// ── Export ────────────────────────────────────────────────────────────────────
+function showExport(){
+  const bows=loadBows();
+  const bow=bows.find(b=>b.id===S.bowId);
+  const date=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  let txt=`PAPER TUNE REPORT\n${bow?bow.name:'Unknown bow'}\n${date}\n`;
+  if(S.env.reason) txt+=`Reason: ${S.env.reason}\n`;
+  if(S.env.temp||S.env.draw) txt+=[S.env.temp?`${S.env.temp}°C`:'',S.env.draw?`${S.env.draw}lbs`:''].filter(Boolean).join('  ')+'\n';
+  txt+=`\nFINAL REST POSITION\nVertical:    ${S.vMm>=0?'+':''}${S.vMm.toFixed(1)}mm\nHorizontal:  ${S.hMm>=0?'+':''}${S.hMm.toFixed(1)}mm\n\nSESSION LOG\n`;
+  S.history.forEach(h=>{txt+=`End ${h.end}: ${h.instruction} [${h.consistency}]${h.env&&h.env.reason?' — '+h.env.reason:''}\n`;});
+  if(bow&&bow.tunes&&bow.tunes.length>=2){
+    const last=bow.tunes.slice(-3);
+    const avgV=(last.reduce((s,t)=>s+t.finalV,0)/last.length).toFixed(1);
+    const avgH=(last.reduce((s,t)=>s+t.finalH,0)/last.length).toFixed(1);
+    txt+=`\nHISTORIC AVERAGE\nV${avgV>=0?'+':''}${avgV}mm · H${avgH>=0?'+':''}${avgH}mm (last ${last.length} tunes)`;
+  }
+  document.getElementById('export-content').textContent=txt;
+  document.getElementById('header-title').textContent='Export';
+  document.getElementById('header-sub').textContent='Session report';
+  showScreen('export');
+}
+
+function copyExport(){
+  const txt=document.getElementById('export-content').textContent;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const btn=document.querySelector('#screen-export .btn-primary');
+    btn.textContent='Copied ✓';
+    setTimeout(()=>btn.textContent='Copy to clipboard',2000);
+  }).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=txt;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    const btn=document.querySelector('#screen-export .btn-primary');
+    btn.textContent='Copied ✓';
+    setTimeout(()=>btn.textContent='Copy to clipboard',2000);
+  });
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function fmtDate(iso){try{return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}catch(e){return iso}}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderBows();
+buildSlots();
+</script>
+</body>
+</html>
